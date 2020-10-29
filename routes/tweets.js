@@ -1,10 +1,13 @@
 const express = require("express");
 const { check, validationResult } = require("express-validator");
+const { requireAuth } = require('../auth');
 
 const db = require("../db/models");
 
 const { Tweet } = db;
 const router = express.Router();
+
+router.use(requireAuth);
 
 const asyncHandler = (handler) => (req, res, next) =>
     handler(req, res, next).catch(next);
