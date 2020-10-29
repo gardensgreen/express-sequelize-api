@@ -21,13 +21,13 @@ const validateEmailAndPassword = [
     check("password")
         .exists({ checkFalsy: true })
         .withMessage("Please provide a password."),
+    handleValidationErrors
 ];
 
 router.post(
     "/",
     validateUsername,
     validateEmailAndPassword,
-    handleValidationErrors,
     asyncHandler(async (req, res) => {
         const { username, email, password } = req.body;
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -43,6 +43,31 @@ router.post(
             user: { id: user.id },
             token,
         });
+    })
+);
+
+router.post(
+    "/token",
+    validateEmailAndPassword,
+    asyncHandler(async (req, res, next) => {
+        const { email, password } = req.body;
+        const user = await User.findOne({
+            where: {
+                email,
+            },
+        });
+        console.log(user);
+        // TODO: Password validation and error handling
+        if(!user || !user.validatePassword(password)) {
+            const err = new Error('Login failed.');
+            err.status = 401;
+            err.title = 'Login failed.';
+            err.errors = ["The provided credentials were invalid."];
+            return next(err);
+        }
+        // TODO: Token generation
+        const token = getUserToken(user);
+        res.json({ token, user: { id: user.id } });
     })
 );
 
